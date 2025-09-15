@@ -38,7 +38,7 @@ app.get('/', (req, res) => {
 
 // Upload video only
 app.post('/upload-video', upload.single('video'), (req, res) => {
-  if (!req.file) return res.status(400).send('No video uploaded.');
+  if (!req.file) return res.status(400).json({ error: 'No video uploaded.' });
   res.json({
     message: 'Video uploaded successfully!',
     filePath: req.file.path,
@@ -50,25 +50,23 @@ app.post('/upload-video', upload.single('video'), (req, res) => {
 app.post('/dubbing', upload.single('audio'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No audio file uploaded.' });
-    if (!req.body.video) return res.status(400).json({ error: 'No video provided.' });
-
-    const videoPath = req.files?.video?.path || '';
+    const videoPath = req.body.videoPath;
     const audioPath = req.file.path;
     const outputPath = path.join('uploads', `dubbed-${Date.now()}.mp4`);
 
     // Cek apakah file video ada
     if (!fs.existsSync(videoPath)) {
-      return res.status(404).json({ error: 'Video file not found.' });
+      return res.status(404).json({ error: 'Video file not found on server.' });
     }
 
     // Gunakan FFmpeg untuk ganti audio
     const ffmpegProcess = spawn(ffmpegPath, [
-      '-i', videoPath,     // Input video
-      '-i', audioPath,     // Input audio baru
-      '-c:v', 'copy',      // Salin video tanpa kompresi
-      '-c:a', 'aac',       // Encode audio ke AAC
+      '-i', videoPath,
+      '-i', audioPath,
+      '-c:v', 'copy',
+      '-c:a', 'aac',
       '-strict', 'experimental',
-      '-shortest',         // Sesuaikan durasi dengan yang lebih pendek
+      '-shortest',
       outputPath
     ]);
 
@@ -94,7 +92,7 @@ app.post('/dubbing', upload.single('audio'), async (req, res) => {
           // Hapus file sementara setelah dikirim
           fs.unlinkSync(outputPath);
           fs.unlinkSync(audioPath);
-          if (videoPath) fs.unlinkSync(videoPath);
+          fs.unlinkSync(videoPath);
         }
       });
     });
