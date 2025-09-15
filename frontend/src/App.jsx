@@ -1,4 +1,3 @@
-// frontend/src/App.jsx
 import { useState } from 'react';
 import './App.css';
 
@@ -21,17 +20,19 @@ function App() {
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunks, { type: 'audio/wav' });
         setAudioBlob(blob);
-        alert('Rekaman selesai! Klik "Ganti Audio" untuk dubbing.');
+        alert('✅ Rekaman selesai! Klik "Ganti Audio" untuk dubbing.');
       };
 
       mediaRecorder.start();
       setIsRecording(true);
+
+      // Auto stop setelah 10 detik (bisa diubah)
       setTimeout(() => {
         mediaRecorder.stop();
         stream.getTracks().forEach(track => track.stop());
-      }, 5000);
+      }, 10000);
     } catch (err) {
-      alert('Gagal akses mikrofon: ' + err.message);
+      alert('❌ Gagal akses mikrofon: ' + err.message);
     }
   };
 
@@ -39,7 +40,7 @@ function App() {
   const handleVideoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file || !file.type.startsWith('video/')) {
-      alert('Silakan pilih file video (MP4, MOV, dll)');
+      alert('⚠️ Silakan pilih file video (MP4, MOV, dll)');
       return;
     }
 
@@ -63,18 +64,18 @@ function App() {
         alert('❌ Gagal upload: ' + result.message);
       }
     } catch (error) {
-      alert('❌ Error saat upload: ' + error.message);
+      alert('❌ Error saat upload video: ' + error.message);
     }
   };
 
-  // --- DUBBING ---
+  // --- DUBBING: GABUNG VIDEO + AUDIO BARU ---
   const handleDubbing = async () => {
     if (!videoFilePath) {
-      alert('Silakan unggah video terlebih dahulu!');
+      alert('⚠️ Silakan unggah video terlebih dahulu!');
       return;
     }
     if (!audioBlob) {
-      alert('Silakan rekam suara terlebih dahulu!');
+      alert('⚠️ Silakan rekam suara terlebih dahulu!');
       return;
     }
 
@@ -99,7 +100,7 @@ function App() {
       const url = URL.createObjectURL(blob);
       setDownloadUrl(url);
 
-      alert('✅ Dubbing selesai! Klik "Download Hasil" untuk menyimpan.');
+      alert('🎉 Dubbing selesai! Klik "Download Hasil" untuk menyimpan.');
     } catch (error) {
       alert('❌ Gagal dubbing: ' + error.message);
     } finally {
@@ -107,7 +108,7 @@ function App() {
     }
   };
 
-  // --- DOWNLOAD HASIL ---
+  // --- DOWNLOAD HASIL DUBBING ---
   const downloadResult = () => {
     if (!downloadUrl) return;
     const a = document.createElement('a');
@@ -128,6 +129,7 @@ function App() {
       </header>
 
       <main style={{ padding: '20px', textAlign: 'center' }}>
+        {/* UPLOAD VIDEO */}
         <input
           type="file"
           accept="video/*"
@@ -135,6 +137,7 @@ function App() {
           style={{ marginBottom: '20px', padding: '10px' }}
         />
 
+        {/* REKAM SUARA */}
         <button
           onClick={startRecording}
           disabled={isRecording}
@@ -148,7 +151,7 @@ function App() {
             fontSize: '16px',
           }}
         >
-          {isRecording ? '⏳ Rekam... (5 detik)' : '🎙️ Rekam Suara Baru'}
+          {isRecording ? '⏳ Rekam... (10 detik)' : '🎙️ Rekam Suara Baru'}
         </button>
 
         {audioBlob && (
@@ -157,6 +160,7 @@ function App() {
           </p>
         )}
 
+        {/* GANTI AUDIO (DUBBING) */}
         <button
           onClick={handleDubbing}
           disabled={!videoFilePath || !audioBlob || isProcessing}
@@ -173,6 +177,7 @@ function App() {
           {isProcessing ? '⏳ Memproses...' : '🎬 Ganti Audio (Dubbing)'}
         </button>
 
+        {/* DOWNLOAD HASIL */}
         {downloadUrl && (
           <button
             onClick={downloadResult}
@@ -190,11 +195,12 @@ function App() {
           </button>
         )}
 
+        {/* INFO */}
         <div style={{ marginTop: '50px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '10px', textAlign: 'left' }}>
           <h3>💡 Cara Kerja:</h3>
           <ol style={{ lineHeight: '1.6' }}>
             <li>Upload video (MP4/MOV)</li>
-            <li>Klik “Rekam Suara Baru” → bicara 5 detik</li>
+            <li>Klik “Rekam Suara Baru” → bicara 10 detik</li>
             <li>Klik “Ganti Audio” → server gabungkan video + suara baru</li>
             <li>Klik “Download Hasil” → simpan ke ponsel!</li>
           </ol>
